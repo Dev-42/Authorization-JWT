@@ -26,7 +26,7 @@ app.post('/login' , async(req,res) => {
     const user = await UserModel.findOne({email,password})
     console.log(user)
     if(user){
-        const token = "secret123"
+        const token = jwt.sign({foo : 'bar'},'mysecret')
         res.send({"msg" : "Login Successful" , "token" : token})
     }
     else{
@@ -35,13 +35,18 @@ app.post('/login' , async(req,res) => {
 })
 
 app.get("/reports" , async(req,res) => {
-    const {token} = req.query 
-    if(token === "secret123"){
-        res.send("Here are the reports")
+    const token = req.headers.authorization.split(" ")[1]
+    if(!token){
+        return res.send("Please login")
     }
-    else{
-        res.send("Please login again")
-    }
+    jwt.verify(token , 'mysecret' , function(err , decoded) {
+        if(decoded){
+            res.send("Here are the reports")
+        }
+        else{
+            res.send("Please login")
+        }
+    })
 })
 
 app.listen(8000,async() => {
