@@ -1,6 +1,8 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+require('dotenv').config()
+
 
 const {connection} = require('./db')
 const {UserModel} = require("./User.model")
@@ -35,7 +37,7 @@ app.post('/login' , async(req,res) => {
     const correct_password = bcrypt.compareSync(password,hash)
 
     if(correct_password){
-        const token = jwt.sign({foo : 'bar'},'mysecret')
+        const token = jwt.sign({userID : user._id},process.env.JWT_SECRET)
         res.send({"msg" : "Login Successful" , "token" : token})
     }
     else{
@@ -48,7 +50,7 @@ app.get("/reports" , async(req,res) => {
     if(!token){
         return res.send("Please login")
     }
-    jwt.verify(token , 'mysecret' , function(err , decoded) {
+    jwt.verify(token , process.env.JWT_SECRET , function(err , decoded) {
         if(decoded){
             res.send("Here are the reports")
         }
