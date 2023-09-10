@@ -1,5 +1,6 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
 const {connection} = require('./db')
 const {UserModel} = require("./User.model")
@@ -10,9 +11,12 @@ app.use(express.json())
 
 app.post('/signup' , async(req,res) => {
     const {email,password,name,age} = req.body
+
+    const hashed_password = bcrypt.hashSync(password,8)
+
     const new_user = new UserModel({
         email : email,
-        password : password,
+        password : hashed_password,
         name : name,
         age : age
     })
@@ -22,15 +26,20 @@ app.post('/signup' , async(req,res) => {
 
 app.post('/login' , async(req,res) => {
     const{email,password} = req.body
-
-    const user = await UserModel.findOne({email,password})
+    const user = await UserModel.findOne({email})
     console.log(user)
-    if(user){
+    if(!user){
+       return res.send("Please login")
+    }
+    const hash = user.password
+    const correct_password = bcrypt.compareSync(password,hash)
+
+    if(correct_password){
         const token = jwt.sign({foo : 'bar'},'mysecret')
         res.send({"msg" : "Login Successful" , "token" : token})
     }
     else{
-        res.send("Login failed")
+        res.send("Login failed.")
     }
 })
 
